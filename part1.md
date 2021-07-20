@@ -69,9 +69,149 @@ Secret message is: 'You can find the source code here: https://github.com/docker
 
 ## 1.6: Hello Docker Hub
 get overview of the repository from https://hub.docker.com/r/devopsdockeruh/pull_exercise
-```
+```shell
 $ docker run -it devopsdockeruh/pull_exercise
 Give me the password: basics
 You found the correct password. Secret message is:
 "This is the secret message"
+```
+
+## 1.7: Two line Dockerfile
+##### Dockerfile
+```dockerfile
+# Start from the alpine image
+FROM devopsdockeruh/simple-web-service:alpine
+
+# When running docker run the command will be server
+CMD server
+```
+##### Bash
+```shell
+$ docker build . -t web-server
+$ docker run web-server
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:   export GIN_MODE=release
+ - using code:  gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /*path                    --> server.Start.func1 (3 handlers)
+[GIN-debug] Listening and serving HTTP on :8080
+```
+## 1.8: Image for script
+##### Dockerfile
+```dockerfile
+# Start from the alpine image
+FROM ubuntu:18.04
+
+# Use /usr/src/app as our workdir. The following instructions will be executed in this location.
+WORKDIR /usr/src/app
+
+# Copy the hello.sh file from this location to /usr/src/app/ creating /usr/src/app/hello.sh
+COPY hello.sh .
+
+# When running docker run the command will be server
+CMD ./hello.sh
+```
+##### Bash
+```shell
+$ docker build . -t curler
+$ docker run -it curler
+Input website:
+helsinki.fi
+Searching..
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>301 Moved Permanently</title>
+</head><body>
+<h1>Moved Permanently</h1>
+<p>The document has moved <a href="https://www.helsinki.fi/">here</a>.</p>
+</body></html>
+```
+## 1.9: Volumes
+```shell
+$ docker run -v "$(pwd)/log.txt:/usr/src/app/text.log" devopsdockeruh/simple-web-service
+Starting log output
+Wrote text to /usr/src/app/text.log
+Wrote text to /usr/src/app/text.log
+Wrote text to /usr/src/app/text.log
+Wrote text to /usr/src/app/text.log
+$ cat ./log.txt 
+2021-07-20 10:11:23 +0000 UTC
+2021-07-20 10:11:25 +0000 UTC
+2021-07-20 10:11:27 +0000 UTC
+2021-07-20 10:11:29 +0000 UTC
+```
+## 1.10: Ports open
+```shell
+$ docker run -p 3000:8080 web-server
+```
+## 1.11: Spring
+##### Dockerfile
+```dockerfile
+FROM openjdk:8
+
+EXPOSE 8080
+
+WORKDIR /usr/src/app
+
+COPY . .
+
+RUN ./mvnw package
+
+CMD ["java", "-jar", "./target/docker-example-1.1.3.jar"]
+```
+##### Bash
+```shell
+$ docker build . -t spring-example
+$ docker run -p 8080:8080 spring-exapmle
+```
+## 1.12: Hello, frontend!
+##### Dockerfile
+```dockerfile
+FROM ubuntu:latest
+
+WORKDIR /usr/src/app
+
+RUN apt-get update && apt-get install -y curl
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
+RUN apt install -y nodejs
+
+COPY . .
+
+RUN npm install
+
+RUN npm run build
+
+RUN npm install -g serve
+
+CMD ["serve", "-s", "-l", "5000", "build"]
+
+EXPOSE 5000
+```
+##### Bash
+```shell
+$ docker build . -t example-frontend
+$ docker run -p 5000:5000 example-frontend
+```
+## 1.13: Hello, backend!
+##### Dockerfile
+```Dockerfile
+FROM golang:1.16
+
+WORKDIR /usr/src/app
+
+COPY . .
+
+RUN go build
+
+RUN go test ./... .
+
+EXPOSE 8080
+
+CMD ["./server"]
+```
+```shell
+$ docker build . -t example-backend
+$ docker run -p 8080:8080 example-backend
 ```
